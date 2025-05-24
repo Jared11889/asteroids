@@ -6,6 +6,7 @@ class Player(CircleShape):
         super().__init__(x, y, PLAYER_RADIUS)
         self.rotation = 0
         self.momentum_vector = pygame.Vector2(0,0).rotate(self.rotation)
+        self.player_clock = 0
 
     # in the player class
     def triangle(self):
@@ -23,6 +24,8 @@ class Player(CircleShape):
         self.rotation += PLAYER_TURN_SPEED * dt
 
     def update(self, dt):
+        self.player_clock -= dt
+
         keys = pygame.key.get_pressed()
 
         if keys[pygame.K_a]:
@@ -30,10 +33,42 @@ class Player(CircleShape):
         if keys[pygame.K_d]:
             self.rotate(dt)
         if keys[pygame.K_w]:
-            self.move(dt)
+            self.impulse_prograde(dt)
         if keys[pygame.K_s]:
-            self.move(dt*-0.25)
+            self.impulse_prograde(dt*-PLAYER_REVERSE_SPEED_MODIFIER)
+        if keys[pygame.K_x]:
+            self.impulse_retrograde(dt)
+        
+        if keys[pygame.K_SPACE]:
+            self.shoot(dt)
 
-    def move(self, dt):
+        self.move()
+    
+    def move(self):
+        self.position += self.velocity
+
+    def impulse_prograde(self, dt):
         forward = pygame.Vector2(0,1).rotate(self.rotation)
-        self.position += forward * PLAYER_SPEED * dt 
+        movement = forward * PLAYER_SPEED * dt
+        self.velocity += movement
+
+    def impulse_retrograde(self, dt):
+        self.velocity += self.velocity * -1 * dt * PLAYER_RETROGRADE_SPEED
+
+    def shoot(self, dt):
+        if self.player_clock <= 0:
+            self.player_clock = PLAYER_SHOOT_COOLDOWN
+            shot = Shot(self.position.x, self.position.y)
+            forward = pygame.Vector2(0,1).rotate(self.rotation)
+            shot.velocity += forward * PLAYER_SHOT_SPEED * dt + self.velocity
+        
+
+class Shot(CircleShape):
+    def __init__(self, x, y):
+        super().__init__(x, y, SHOT_RADIUS)
+
+    def draw(self, screen):
+        pygame.draw.circle(screen, "white", self.position, self.radius, 2)
+
+    def update(self, dt):
+        self.position += self.velocity * dt
