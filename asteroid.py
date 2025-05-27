@@ -7,11 +7,15 @@ class Asteroid(CircleShape):
     def __init__(self, x, y, radius):
         super().__init__(x, y, radius)
         self.mass = pi*pow(radius,2)
+        self.clock = 0
     
     def draw(self, screen):
         pygame.draw.circle(screen, "white", self.position, self.radius, 2)
 
     def update(self, dt):
+        self.clock += dt
+        self.expired = self.clock > SHOT_TIME_TO_LIVE
+        self.wrap_around_move()
         self.position += self.velocity * dt
 
     def split(self):
